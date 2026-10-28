@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#020617">
+  <meta name="description" content="CreatorPulse Engine creator collaboration and audit dashboard.">
+  <title>CreatorPulse Engine | Creator Dashboard</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            pulse: "#00FF00",
+            panel: "#0b1220",
+            surface: "#111827"
+          },
+          boxShadow: {
+            neon: "0 0 24px rgba(0,255,0,.08)"
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --neon: #00ff00;
+      --background: #020617;
+      --panel: #0b1220;
+      --border: rgba(148, 163, 184, .15);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 70% -20%, rgba(0,255,0,.07), transparent 38%),
+        var(--background);
+      color: #e2e8f0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+
+    button, input, textarea { font: inherit; }
+
+    button:focus-visible, a:focus-visible, input:focus-visible,
+    textarea:focus-visible {
+      outline: 2px solid var(--neon);
+      outline-offset: 3px;
+    }
+
+    .glass {
+      background: rgba(11, 18, 32, .86);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #94a3b8;
+      text-align: left;
+      transition: .2s ease;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      color: var(--neon);
+      background: rgba(0,255,0,.07);
+    }
+
+    .nav-item.active {
+      border: 1px solid rgba(0,255,0,.16);
+    }
+
+    .panel {
+      background: linear-gradient(145deg, rgba(15,23,42,.94),
+        rgba(8,15,29,.97));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      min-width: 0;
+    }
+
+    .eyebrow {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+
+    .neon-button {
+      background: var(--neon);
+      color: #021002;
+      font-weight: 800;
+      transition: .2s ease;
+    }
+
+    .neon-button:hover {
+      background: #a3ff9b;
+      transform: translateY(-1px);
+    }
+
+    .neon-button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .muted-button {
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+      background: rgba(15,23,42,.7);
+    }
+
+    .muted-button:hover { border-color: rgba(0,255,0,.35); }
+
+    .field {
+      width: 100%;
+      border: 1px solid #273449;
+      background: #050b17;
+      color: #e2e8f0;
+      border-radius: 10px;
+      padding: 11px 12px;
+    }
+
+    .field::placeholder { color: #64748b; }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--neon);
+      border-radius: 999px;
+      box-shadow: 0 0 10px rgba(0,255,0,.6);
+      display: inline-block;
+    }
+
+    .feed-item {
+      border-left: 1px solid #243147;
+      padding: 0 0 17px 15px;
+      position: relative;
+    }
+
+    .feed-item::before {
+      content: "";
+      position: absolute;
+      left: -4px;
+      top: 5px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--feed-color, #64748b);
+    }
+
+    .feed-item.success { --feed-color: #00ff00; }
+    .feed-item.warning { --feed-color: #fbbf24; }
+    .feed-item.info { --feed-color: #38bdf8; }
+
+    .thumbnail {
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      object-fit: cover;
+      background: #111827;
+    }
+
+    .hidden-view { display: none !important; }
+
+    @media (min-width: 1024px) {
+      .main-grid {
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="toast" role="status" aria-live="polite"
+       class="fixed bottom-4 right-4 z-50 hidden max-w-sm rounded-xl border
+              border-slate-700 bg-slate-900 px-4 py-3 text-sm shadow-2xl">
+  </div>
+
+  <!-- Sign-in and registration -->
+  <section id="authScreen" class="min-h-screen flex items-center justify-center p-5">
+    <div class="w-full max-w-md">
+      <div class="mb-8 text-center">
+        <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center
+                    rounded-2xl border border-green-400/30 bg-green-400/10
+                    text-2xl text-pulse">ϟ</div>
+        <h1 class="text-3xl font-black tracking-tight text-white">
+          CreatorPulse<span class="text-pulse">.</span>
+        </h1>
+        <p class="mt-2 text-sm text-slate-400">Creator collaboration control center</p>
+      </div>
+
+      <div class="glass rounded-2xl p-6 sm:p-8 shadow-neon">
+        <div class="mb-6 flex gap-2 border-b border-slate-800 pb-4">
+          <span class="status-dot mt-1.5"></span>
+          <div>
+            <p class="text-sm font-bold text-white">Secure workspace</p>
+            <p class="mt-1 text-xs text-slate-500">
+              Sign in with a demo account or create your own.
+            </p>
+          </div>
+        </div>
+
+        <form id="authForm" class="space-y-4">
+          <label class="block">
+            <span class="mb-2 block text-xs font-semibold text-slate-300">Username</span>
+            <input id="username" class="field" required minlength="3" maxlength="24"
+                   pattern="[A-Za-z0-9_]{3,24}" autocomplete="username"
+                   placeholder="your_username">
+          </label>
+
+          <label class="block">
+            <span class="mb-2 block text-xs font-semibold text-slate-300">
+              YouTube handle
+            </span>
+            <input id="handle" class="field" maxlength="51"
+                   placeholder="@yourchannel" autocomplete="off">
+            <span class="mt-1 block text-xs text-slate-500">
+              Required for registration; optional for demo login.
+            </span>
+          </label>
+
+          <button class="neon-button w-full rounded-xl px-4 py-3 text-sm"
+                  type="submit">
+            CREATE ACCOUNT
+          </button>
+        </form>
+
+        <div class="my-5 flex items-center gap-3">
+          <div class="h-px flex-1 bg-slate-800"></div>
+          <span class="text-xs text-slate-500">OR TRY A DEMO</span>
+          <div class="h-px flex-1 bg-slate-800"></div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <button class="muted-button rounded-lg px-3 py-2 text-xs"
+                  data-demo="demo_creator">Demo Creator</button>
+          <button class="muted-button rounded-lg px-3 py-2 text-xs"
+                  data-demo="tech_studio">Tech Studio</button>
+          <button class="muted-button rounded-lg px-3 py-2 text-xs"
+                  data-demo="learn_coding">Learn Coding</button>
+        </div>
+
+        <p class="mt-5 text-center text-xs leading-5 text-slate-500">
+          Demo accounts share the local development database. Do not use
+          sensitive information in this demo.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Application -->
+  <div id="appScreen" class="hidden-view min-h-screen">
+    <header class="glass sticky top-0 z-30 border-x-0 border-t-0">
+      <div class="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-4 sm:px-6">
+        <div class="flex min-w-0 items-center gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center
+                      rounded-xl border border-green-400/30 bg-green-400/10
+                      text-xl text-pulse">ϟ</div>
+          <div class="min-w-0">
+            <h1 class="truncate text-base font-black tracking-tight text-white sm:text-lg">
+              CreatorPulse <span class="text-pulse">Engine</span>
+            </h1>
+            <p class="eyebrow mt-1 hidden sm:block">CREATOR AUDIT NETWORK</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 sm:gap-5">
+          <div class="text-right">
+            <p class="eyebrow">YOUR POINTS</p>
+            <p id="headerPoints" class="mt-1 text-xl font-black text-pulse">0</p>
+          </div>
+          <div class="hidden h-9 w-px bg-slate-800 sm:block"></div>
+          <div class="hidden sm:block">
+            <p id="headerUsername" class="text-sm font-bold text-white">Creator</p>
+            <p id="headerHandle" class="mt-1 text-xs text-slate-500">@creator</p>
+          </div>
+          <button id="logoutButton"
+                  class="muted-button rounded-lg px-3 py-2 text-xs font-bold">
+            Sign out
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="mx-auto grid max-w-[1600px] lg:grid-cols-[230px_minmax(0,1fr)]">
+      <aside class="border-b border-slate-800 p-4 sm:p-6 lg:min-h-[calc(100vh-73px)]
+                    lg:border-b-0 lg:border-r">
+        <p class="eyebrow mb-3 px-3">WORKSPACE</p>
+        <nav class="space-y-1" aria-label="Main navigation">
+          <button class="nav-item active" data-view="hub">
+            <span>◈</span><span class="text-sm font-semibold">Main Hub</span>
+          </button>
+          <button class="nav-item" data-view="earn">
+            <span>ϟ</span><span class="text-sm font-semibold">Earn Points</span>
+          </button>
+          <button class="nav-item" data-view="stats">
+            <span>⌁</span><span class="text-sm font-semibold">Anti-Cheat Stats</span>
+          </button>
+        </nav>
+
+        <div class="mt-8 rounded-xl border border-green-400/15 bg-green-400/5 p-4">
+          <div class="flex items-center gap-2">
+            <span class="status-dot"></span>
+            <span class="text-xs font-bold text-green-300">SYSTEM ONLINE</span>
+          </div>
+          <p class="mt-3 text-xs leading-5 text-slate-400">
+            Creator audit workspace. All point transfers are recorded in the
+            local activity log.
+          </p>
+        </div>
+
+        <div class="mt-6 px-3">
+          <p class="eyebrow mb-2">SESSION</p>
+          <p id="sidebarUsername" class="break-all text-sm font-semibold text-slate-200">—</p>
+          <p class="mt-1 text-xs text-slate-500">Flask session</p>
+        </div>
+      </aside>
+
+      <main class="min-w-0 p-4 sm:p-6 lg:p-8">
+        <section id="view-hub">
+          <div class="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <p class="eyebrow text-green-300">OVERVIEW / CREATOR NETWORK</p>
+              <h2 class="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">
+                Command Center<span class="text-pulse">.</span>
+              </h2>
+              <p class="mt-2 text-sm text-slate-400">
+                Review creator metadata, submit audit findings, track your points.
+              </p>
+            </div>
+            <button id="refreshButton"
+                    class="muted-button self-start rounded-xl px-4 py-2.5 text-sm font-semibold sm:self-auto">
+              ↻ Refresh data
+            </button>
+          </div>
+
+          <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div class="panel p-5">
+              <p class="eyebrow">AVAILABLE POINTS</p>
+              <div class="mt-3 flex items-end justify-between">
+                <p id="statPoints" class="text-3xl font-black text-pulse">0</p>
+                <span class="text-xs text-slate-500">Current balance</span>
+              </div>
+            </div>
+            <div class="panel p-5">
+              <p class="eyebrow">NETWORK CREATORS</p>
+              <div class="mt-3 flex items-end justify-between">
+                <p id="statCreators" class="text-3xl font-black text-white">0</p>
+                <span class="text-xs text-slate-500">Registered accounts</span>
+              </div>
+            </div>
+            <div class="panel p-5">
+              <p class="eyebrow">AUDIT EVENTS</p>
+              <div class="mt-3 flex items-end justify-between">
+                <p id="statAudits" class="text-3xl font-black text-white">0</p>
+                <span class="text-xs text-slate-500">Recorded submissions</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="main-grid grid grid-cols-1 gap-5">
+            <!-- Card 1 -->
+            <article class="panel overflow-hidden">
+              <div class="flex items-center justify-between border-b border-slate-800 p-5">
+                <div>
+                  <p class="eyebrow text-green-300">01 / DISCOVERY</p>
+                  <h3 class="mt-2 text-lg font-bold text-white">Today's Assigned Task</h3>
+                </div>
+                <span class="rounded-full border border-green-400/20 bg-green-400/5
+                             px-3 py-1 text-xs text-green-300">CREATOR AUDIT</span>
+              </div>
+
+              <div class="p-5">
+                <div class="relative overflow-hidden rounded-xl border border-slate-800">
+                  <img id="taskThumbnail" class="thumbnail"
+                       alt="Selected creator video thumbnail"
+                       src="https://placehold.co/640x360/0b1220/00ff00?text=Creator+Audit"
+                       referrerpolicy="no-referrer">
+                  <div class="absolute left-3 top-3 rounded-md bg-slate-950/90
+                              px-2 py-1 text-xs font-bold text-green-300">
+                    PUBLIC METADATA
+                  </div>
+                </div>
+
+                <div class="mt-5">
+                  <p class="eyebrow">SEARCH KEYWORD</p>
+                  <div class="mt-2 flex items-center justify-between gap-3">
+                    <p id="taskKeyword" class="text-lg font-bold text-white">Loading task…</p>
+                    <button id="copyKeyword"
+                            class="muted-button shrink-0 rounded-lg px-3 py-2 text-xs">
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mt-5 rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+                  <p class="eyebrow">TARGET CREATOR</p>
+                  <p id="taskHandle" class="mt-2 break-all font-bold text-green-300">—</p>
+                  <p id="taskInstructions" class="mt-3 text-sm leading-6 text-slate-400">
+                    Loading instructions…
+                  </p>
+                </div>
+
+                <a id="openVideo" href="#" target="_blank" rel="noopener noreferrer"
+                   class="muted-button mt-4 flex items-center justify-center rounded-xl
+                          px-4 py-3 text-sm font-bold">
+                  OPEN PUBLIC CREATOR PAGE ↗
+                </a>
+
+                <button id="nextTask"
+                        class="neon-button mt-3 w-full rounded-xl px-4 py-3 text-sm">
+                  FIND ANOTHER CREATOR
+                </button>
+              </div>
+            </article>
+
+            <!-- Card 2 -->
+            <article class="panel">
+              <div class="border-b border-slate-800 p-5">
+                <p class="eyebrow text-green-300">02 / SUBMISSION</p>
+                <h3 class="mt-2 text-lg font-bold text-white">Proof & Audit Review</h3>
+                <p class="mt-2 text-sm leading-6 text-slate-400">
+                  Attach optional supporting evidence and explain what you
+                  observed on the public creator page.
+                </p>
+              </div>
+
+              <div class="space-y-5 p-5">
+                <div>
+                  <label for="proofFile" class="mb-2 block text-xs font-bold text-slate-300">
+                    SUPPORTING FILE (OPTIONAL)
+                  </label>
+                  <label for="proofFile"
+                         class="flex cursor-pointer flex-col items-center justify-center
+                                rounded-xl border border-dashed border-slate-700 bg-slate-950/60
+                                px-4 py-7 text-center transition hover:border-green-400/50">
+                    <span class="text-2xl text-pulse">⇧</span>
+                    <span class="mt-3 text-sm font-bold text-white">Choose evidence file</span>
+                    <span class="mt-1 text-xs text-slate-500">PNG, JPG, PDF or TXT · max 2 MB</span>
+                    <span id="fileName" class="mt-3 break-all text-xs text-green-300">
+                      No file selected
+                    </span>
+                  </label>
+                  <input id="proofFile" type="file" class="hidden"
+                         accept=".png,.jpg,.jpeg,.pdf,.txt">
+                  <p class="mt-2 text-xs leading-5 text-slate-500">
+                    This demo only reads the filename. The file is not uploaded
+                    or verified by the server.
+                  </p>
+                </div>
+
+                <div>
+                  <label for="proofText" class="mb-2 block text-xs font-bold text-slate-300">
+                    AUDIT FINDINGS
+                  </label>
+                  <textarea id="proofText" class="field resize-y" rows="4"
+                            maxlength="2000" minlength="20"
+                            placeholder="Describe the public channel metadata you reviewed, such as title, description, or visible channel details."></textarea>
+                  <div class="mt-2 flex justify-between gap-3 text-xs text-slate-500">
+                    <span>Minimum 20 characters</span>
+                    <span id="charCount">0 / 2000</span>
+                  </div>
+                </div>
+
+                <button id="verifyButton"
+                        class="neon-button w-full rounded-xl px-4 py-4 text-sm tracking-wide">
+                  ⚡ RUN AI VERIFICATION
+                </button>
+
+                <div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+                  <div class="flex gap-3">
+                    <span class="text-green-300">ⓘ</span>
+                    <p class="text-xs leading-5 text-slate-400">
+                      The demo uses server-side text checks, not AI image analysis.
+                      No watch-time, view, or engagement metric is verified.
+                      A successful audit transfers 5 points from the audited
+                      creator to the reviewer.
+                    </p>
+                  </div>
+                </div>
+
+                <div id="verificationResult" class="hidden-view rounded-xl p-4 text-sm"
+                     role="status" aria-live="polite"></div>
+              </div>
+            </article>
+          </div>
+
+          <!-- Card 3 -->
+          <section class="panel mt-5">
+            <div class="flex flex-col justify-between gap-3 border-b border-slate-800
+                        p-5 sm:flex-row sm:items-center">
+              <div>
+                <p class="eyebrow text-green-300">03 / LIVE MONITOR</p>
+                <h3 class="mt-2 text-lg font-bold text-white">System Live Activity</h3>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-slate-400">
+                <span class="status-dot"></span>
+                <span>SERVER-RECORDED EVENTS</span>
+                <button id="refreshActivity"
+                        class="ml-2 rounded-lg border border-slate-700 px-3 py-2 hover:border-green-400/40">
+                  Refresh
+                </button>
+              </div>
+            </div>
+
+            <div id="activityFeed" class="p-5">
+              <p class="text-sm text-slate-500">Loading activity…</p>
+            </div>
+          </section>
+        </sec

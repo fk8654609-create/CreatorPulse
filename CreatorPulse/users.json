@@ -1,0 +1,20 @@
+{
+  "demo_creator": {
+    "points": 100,
+    "video_id": "dQw4w9WgXcQ",
+    "keyword": "Python Basics",
+    "handle": "@demo_creator"
+  },
+  "tech_studio": {
+    "points": 100,
+    "video_id": "M7lc1UVf-VE",
+    "keyword": "Web Development Tutorial",
+    "handle": "@tech_studio"
+  },
+  "learn_coding": {
+    "points": 100,
+    "video_id": "kqtD5dpn9C8",
+    "keyword": "Learn Python Programming",
+    "handle": "@learn_coding"
+  }
+}
